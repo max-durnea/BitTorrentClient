@@ -86,6 +86,7 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 	}
 	return m, nil
 }
+
 func (d *Decoder) decodeList() ([]BValue, error) {
 	var list []BValue
 	for {
