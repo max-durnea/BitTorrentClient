@@ -2,7 +2,6 @@ package bencode
 
 import (
 	"bufio"
-	//"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -13,14 +12,19 @@ type BValue interface{}
 type Decoder struct {
 	r         *bufio.Reader
 	InfoBytes []byte
+	readBytes []byte
+	count     int
+	start     int
+	end       int
+	first     bool
 }
 
 func NewDecoder(r io.Reader) *Decoder {
-	return &Decoder{r: bufio.NewReader(r)}
+	return &Decoder{r: bufio.NewReader(r), first: true}
 }
 
 func (d *Decoder) Decode() (BValue, error) {
-	b, err := d.r.ReadByte()
+	b, err := d.readByte()
 	if err != nil {
 		return nil, err
 	}
@@ -64,12 +68,14 @@ func (d *Decoder) decodeString(b byte) (string, error) {
 	if _, err := io.ReadFull(d.r, buf); err != nil {
 		return "", err
 	}
+	d.readBytes = append(d.readBytes, buf...)
+	d.count += len(buf)
 	return string(buf), nil
 }
 func (d *Decoder) decodeDict() (map[string]BValue, error) {
 	m := make(map[string]BValue)
 	for {
-		b, err := d.r.ReadByte()
+		b, err := d.readByte()
 		if err != nil {
 			return nil, err
 		}
@@ -80,21 +86,18 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 		if err != nil {
 			return nil, err
 		}
-
-		/*if key == "info" {
-			origReader := d.r
-			info_bytes := &bytes.Buffer{}
-			d.r = bufio.NewReader(io.TeeReader(origReader, info_bytes))
+		if key == "info" && d.first {
+			d.first = false
+			d.start = d.count
 			value, err := d.Decode()
 			if err != nil {
 				return nil, err
 			}
 			m[key] = value
-			d.InfoBytes = info_bytes.Bytes()
-			d.r = origReader
+			d.end = d.count
+			d.InfoBytes = d.readBytes[d.start:d.end]
 			continue
-		}*/
-
+		}
 		value, err := d.Decode()
 		if err != nil {
 			return nil, err
@@ -112,7 +115,7 @@ func (d *Decoder) decodeList() ([]BValue, error) {
 			return nil, err
 		}
 		if b[0] == 'e' {
-			d.r.ReadByte()
+			d.readByte()
 			break
 		}
 		v, err := d.Decode()
@@ -126,7 +129,7 @@ func (d *Decoder) decodeList() ([]BValue, error) {
 func (d *Decoder) readUntil(delim byte) (string, error) {
 	var str string
 	for {
-		b, err := d.r.ReadByte()
+		b, err := d.readByte()
 		if err != nil {
 			return "", err
 		}
@@ -135,4 +138,13 @@ func (d *Decoder) readUntil(delim byte) (string, error) {
 		}
 		str += string(b)
 	}
+}
+func (d *Decoder) readByte() (byte, error) {
+	b, err := d.r.ReadByte()
+	if err != nil {
+		return 0, err
+	}
+	d.readBytes = append(d.readBytes, b)
+	d.count += 1
+	return b, nil
 }
