@@ -2,7 +2,7 @@ package bencode
 
 import (
 	"bufio"
-	"bytes"
+	//"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -81,7 +81,7 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 			return nil, err
 		}
 
-		if key == "info" {
+		/*if key == "info" {
 			origReader := d.r
 			info_bytes := &bytes.Buffer{}
 			d.r = bufio.NewReader(io.TeeReader(origReader, info_bytes))
@@ -93,7 +93,7 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 			d.InfoBytes = info_bytes.Bytes()
 			d.r = origReader
 			continue
-		}
+		}*/
 
 		value, err := d.Decode()
 		if err != nil {
