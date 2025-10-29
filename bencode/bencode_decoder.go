@@ -12,7 +12,7 @@ type BValue interface{}
 
 type Decoder struct {
 	r         *bufio.Reader
-	infoBytes []byte
+	InfoBytes []byte
 }
 
 func NewDecoder(r io.Reader) *Decoder {
@@ -89,7 +89,7 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 				return nil, err
 			}
 			m[key] = value
-			d.infoBytes = info_bytes.Bytes()
+			d.InfoBytes = info_bytes.Bytes()
 			continue
 		}
 
