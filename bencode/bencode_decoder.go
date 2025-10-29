@@ -80,16 +80,18 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 		if err != nil {
 			return nil, err
 		}
+
 		if key == "info" {
+			origReader := d.r
 			info_bytes := &bytes.Buffer{}
-			tee := io.TeeReader(d.r, info_bytes)
-			dec := &Decoder{r: bufio.NewReader(tee)}
-			value, err := dec.Decode()
+			d.r = bufio.NewReader(io.TeeReader(origReader, info_bytes))
+			value, err := d.Decode()
 			if err != nil {
 				return nil, err
 			}
 			m[key] = value
 			d.InfoBytes = info_bytes.Bytes()
+			d.r = origReader
 			continue
 		}
 
