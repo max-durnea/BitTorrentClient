@@ -2,6 +2,7 @@ package bencode
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io"
 	"strconv"
@@ -10,7 +11,8 @@ import (
 type BValue interface{}
 
 type Decoder struct {
-	r *bufio.Reader
+	r         *bufio.Reader
+	infoBytes []byte
 }
 
 func NewDecoder(r io.Reader) *Decoder {
@@ -78,6 +80,19 @@ func (d *Decoder) decodeDict() (map[string]BValue, error) {
 		if err != nil {
 			return nil, err
 		}
+		if key == "info" {
+			info_bytes := &bytes.Buffer{}
+			tee := io.TeeReader(d.r, info_bytes)
+			dec := &Decoder{r: bufio.NewReader(tee)}
+			value, err := dec.Decode()
+			if err != nil {
+				return nil, err
+			}
+			m[key] = value
+			d.infoBytes = info_bytes.Bytes()
+			continue
+		}
+
 		value, err := d.Decode()
 		if err != nil {
 			return nil, err
