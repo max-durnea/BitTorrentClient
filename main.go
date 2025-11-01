@@ -6,6 +6,7 @@ import (
 	"crypto/sha1"
 	"fmt"
 	"github.com/max-durnea/BitTorrentClient/bencode"
+	"io"
 	"os"
 )
 
@@ -50,6 +51,18 @@ func main() {
 		fmt.Println(fmt.Errorf("%v\n", err))
 		return
 	}
+	fmt.Printf("Announce: %s\n", torrent.announce)
+	fmt.Printf("Comment: %s\n", torrent.comment)
+	fmt.Printf("Creation date: %d\n", torrent.creation_date)
+	fmt.Printf("Info:\n  Name: %s\n  Length: %d\n  Piece length: %d\n",
+		torrent.info.name, torrent.info.length, torrent.info.piece_length)
+
+	fmt.Println("  Pieces hashes:")
+	for i, h := range torrent.info.pieces_hashes {
+		fmt.Printf("    piece %d: %x\n", i, h)
+	}
+
+	fmt.Printf("Info hash: %x\n", torrent.info_hash)
 	buf := make([]byte, 20)
 	rand.Read(buf)
 	port := 6882
@@ -64,19 +77,10 @@ func main() {
 		fmt.Println(fmt.Errorf("%v\n", err))
 		return
 	}
-	fmt.Println(resp)
-	//fmt.Printf("Announce: %s\n", torrent.announce)
-	//fmt.Printf("Comment: %s\n", torrent.comment)
-	//fmt.Printf("Creation date: %d\n", torrent.creation_date)
-	//fmt.Printf("Info:\n  Name: %s\n  Length: %d\n  Piece length: %d\n",
-	//	torrent.info.name, torrent.info.length, torrent.info.piece_length)
+	defer resp.Body.Close()
+	dataR, _ := io.ReadAll(resp.Body)
+	fmt.Println(string(dataR))
 
-	//fmt.Println("  Pieces hashes:")
-	//for i, h := range torrent.info.pieces_hashes {
-	//	fmt.Printf("    piece %d: %x\n", i, h)
-	//}
-
-	//fmt.Printf("Info hash: %x\n", torrent.info_hash)
 }
 
 /*
